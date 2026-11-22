@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo Đồ án OOP: Hệ thống Quản lý Thư viện - Nhóm 10</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #070b14;
+            --bg-card: rgba(17, 25, 45, 0.85);
+            --bg-code: #050811;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.18);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background-image: 
+                radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.08), transparent 32%),
+                radial-gradient(circle at 88% 82%, rgba(129, 140, 248, 0.08), transparent 32%);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
+            background: rgba(255, 255, 255, 0.05); z-index: 200;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            width: 0%; transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Slide Container */
+        .slides-wrapper { position: relative; width: 100%; height: 100%; }
+
+        .slide {
+            position: absolute; inset: 0;
+            padding: 32px 60px 70px 60px;
+            display: flex; flex-direction: column; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transform: translateX(35px) scale(0.985);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slide.active {
+            opacity: 1; visibility: visible;
+            transform: translateX(0) scale(1);
+        }
+
+        .slide.active .anim {
+            animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .d1 { animation-delay: 0.05s; opacity: 0; }
+        .d2 { animation-delay: 0.12s; opacity: 0; }
+        .d3 { animation-delay: 0.20s; opacity: 0; }
+        .d4 { animation-delay: 0.28s; opacity: 0; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .slide-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+        }
+        .slide-title {
+            font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 12px;
+        }
+        .num-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700;
+            color: var(--primary); background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 10px; border-radius: 6px;
+        }
+        .chapter-pill {
+            font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+            color: var(--accent); background: rgba(52, 211, 153, 0.1);
+            padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        h1.hero-title {
+            font-size: 3.2rem; font-weight: 800; line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 25%, var(--primary) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        p.lead { font-size: 1.08rem; color: var(--text-muted); line-height: 1.6; max-width: 860px; }
+
+        /* Grids & Cards */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-12-8 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; }
+        .grid-8-12 { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(10px);
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+        .card:hover { border-color: rgba(56, 189, 248, 0.4); }
+        .card h3 { font-size: 1.02rem; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .card p, .card li { font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; }
+        .card ul { list-style: none; }
+        .card ul li { position: relative; padding-left: 16px; margin-bottom: 6px; }
+        .card ul li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.84em;
+            background: rgba(56, 189, 248, 0.1); color: #7dd3fc;
+            padding: 1px 5px; border-radius: 4px;
+        }
+
+        /* Code Block Window */
+        .code-window {
+            background: var(--bg-code); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .code-header {
+            background: rgba(30, 41, 59, 0.65); padding: 7px 14px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #94a3b8;
+            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+        }
+        .code-body {
+            font-family: 'JetBrains Mono', monospace; padding: 14px 16px;
+            font-size: 0.78rem; line-height: 1.52; color: #e2e8f0;
+            overflow-x: auto; white-space: pre;
+        }
+        .kw { color: #c084fc; font-weight: 600; }
+        .cls { color: #38bdf8; }
+        .fn { color: #34d399; }
+        .str { color: #fbbf24; }
+        .num { color: #f472b6; }
+        .cmt { color: #64748b; font-style: italic; }
+        .ann { color: #fb923c; }
+
+        /* UML Wrapper */
+        .uml-wrapper {
+            background: #0a101d; border: 1px solid var(--border);
+            border-radius: 14px; padding: 12px; width: 100%;
+            display: flex; justify-content: center; align-items: center;
+        }
+        svg.uml-svg { width: 100%; height: auto; max-height: 440px; }
+        .uml-rect { fill: #131c31; stroke: #38bdf8; stroke-width: 1.5; rx: 6; }
+        .uml-rect-abs { fill: #171e36; stroke: #c084fc; stroke-width: 1.5; stroke-dasharray: 4 2; rx: 6; }
+        .uml-rect-int { fill: #11242b; stroke: #34d399; stroke-width: 1.5; rx: 6; }
+        .uml-rect-exc { fill: #261620; stroke: #f87171; stroke-width: 1.5; rx: 6; }
+        .uml-hdr { fill: rgba(56, 189, 248, 0.14); }
+        .uml-hdr-abs { fill: rgba(192, 132, 252, 0.14); }
+        .uml-hdr-int { fill: rgba(52, 211, 153, 0.14); }
+        .uml-hdr-exc { fill: rgba(248, 113, 113, 0.14); }
+        .uml-title { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; fill: #f8fafc; text-anchor: middle; }
+        .uml-stereo { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; fill: #94a3b8; text-anchor: middle; }
+        .uml-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #cbd5e1; }
+        .uml-line { stroke: #64748b; stroke-width: 1.4; fill: none; }
+        .uml-dash { stroke: #34d399; stroke-width: 1.4; stroke-dasharray: 5 3; fill: none; }
+
+        /* Table */
+        table.data-table {
+            width: 100%; border-collapse: collapse; font-size: 0.85rem;
+            background: var(--bg-card); border-radius: 12px; overflow: hidden;
+        }
+        table.data-table th, table.data-table td {
+            padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+        }
+        table.data-table th { background: rgba(56, 189, 248, 0.12); color: var(--primary); font-weight: 600; }
+
+        /* Bottom Controls */
+        .bottom-bar {
+            position: fixed; bottom: 16px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 200;
+        }
+        .slide-select {
+            background: rgba(15, 23, 42, 0.92); color: var(--text-main);
+            border: 1px solid var(--border); padding: 7px 14px; border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 0.84rem; cursor: pointer; outline: none;
+        }
+        .controls {
+            display: flex; align-items: center; gap: 14px;
+            background: rgba(15, 23, 42, 0.92); padding: 6px 16px;
+            border-radius: 999px; border: 1px solid var(--border);
+        }
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.08); border: none; color: #fff;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-size: 0.95rem; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-nav:hover { background: var(--primary); color: #070b14; }
+        .slide-counter { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
+    <div class="slides-wrapper" id="slidesWrapper">
+
+        <!-- SLIDE 1: BÌA BÁO CÁO -->
+        <section class="slide active" data-title="01. Trang bìa Báo cáo">
+            <div class="anim d1" style="margin-bottom: 14px;">
+                <span class="num-tag">BÁO CÁO ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (JAVA)</span>
+            </div>
+            <h1 class="hero-title anim d2">Hệ thống Quản lý Thư viện<br>(LibraryManagement)</h1>
+            <p class="lead anim d3">
+                Xây dựng phần mềm quản lý nghiệp vụ thư viện theo kiến trúc phân tầng, áp dụng triệt để 4 nguyên lý OOP, Generic Programming, Design Pattern (Strategy, Repository, DI) và cơ chế lưu trữ tuần tự hóa nhị phân.
+            </p>
+            <div class="grid-4 anim d4" style="margin-top: 30px;">
+                <div class="card">
+                    <h3>👥 Nhóm thực hiện</h3>
+                    <p style="color: #fff; font-weight: 700; font-size: 1.1rem;">Nhóm 10</p>
+                    <p>Phát triển & Kiểm thử toàn diện</p>
+                </div>
+                <div class="card">
+                    <h3>☕ Công nghệ</h3>
+                    <p style="color: var(--primary); font-weight: 700; font-size: 1.1rem;">Java Core (JDK)</p>
+                    <p>Java I/O Serialization, Collections, Stream API</p>
+                </div>
+                <div class="card">
+                    <h3>🏛️ Kiến trúc</h3>
+                    <p style="color: var(--accent); font-weight: 700; font-size: 1.1rem;">5-Layer Architecture</p>
+                    <p>UI ➔ Service ➔ Repository ➔ Model ➔ Utils</p>
+                </div>
+                <div class="card">
+                    <h3>📦 Đóng gói & Test</h3>
+                    <p style="color: var(--warning); font-weight: 700; font-size: 1.1rem;">LibraryApp.jar</p>
+                    <p>Kèm bộ Unit & Integration Test tự động</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: NỘI DUNG BÁO CÁO (MỤC LỤC) -->
+        <section class="slide" data-title="02. Nội dung Báo cáo">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">02</span> Nội dung Trình bày Báo cáo</div>
+                <span class="chapter-pill">Tổng quan</span>
+            </div>
+            <div class="grid-3 anim d2">
+                <div class="card">
+                    <h3>Chương 1: Đặt vấn đề & Phân tích</h3>
+                    <ul>
+                        <li>Thực trạng & Bài toán quản lý thư viện.</li>
+                        <li>Phân tích yêu cầu chức năng (Functional) và phi chức năng (Non-functional).</li>
+                        <li>Phân tích tác nhân & Quy tắc nghiệp vụ.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Chương 2: Thiết kế Hệ thống & UML</h3>
+                    <ul>
+                        <li>Kiến trúc phân tầng & Tổ chức Package.</li>
+                        <li>Sơ đồ UML Class Diagram (Model, Service, Repository, Exception).</li>
+                        <li>Sơ đồ UML Sequence Diagram luồng Mượn/Trả.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Chương 3: Cài đặt Code & Kiểm thử</h3>
+                    <ul>
+                        <li>Chi tiết cài đặt mã nguồn từng phân hệ cốt lõi.</li>
+                        <li>Áp dụng Strategy Pattern & Generic Repository.</li>
+                        <li>Kịch bản kiểm thử tự động & Đánh giá kết quả.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: CHƯƠNG 1 - ĐẶT VẤN ĐỀ & PHÂN TÍCH YÊU CẦU -->
+        <section class="slide" data-title="03. Chương 1: Phân tích Yêu cầu">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">03</span> Phân tích Bài toán & Yêu cầu Hệ thống</div>
+                <span class="chapter-pill">Chương 1: Phân tích</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="card">
+                    <h3>📋 Yêu cầu Chức năng (Functional Requirements)</h3>
+                    <ul>
+                        <li><strong>Quản trị & Xác thực:</strong> Đăng ký, đăng nhập tài khoản thủ thư (<code>Librarian</code>), mã hóa mật khẩu an toàn.</li>
+                        <li><strong>Quản lý Kho sách:</strong> Thêm, sửa, xóa, cập nhật số lượng, tìm kiếm đa tiêu chí và kiểm soát tồn kho khả dụng.</li>
+                        <li><strong>Quản lý Độc giả:</strong> Phân nhóm <em>Sinh viên thường</em>, <em>Sinh viên ưu tiên</em>, <em>Giảng viên</em> với hạn mức mượn riêng biệt.</li>
+                        <li><strong>Nghiệp vụ Mượn/Trả:</strong> Lập phiếu mượn nhiều đầu sách, tự động tính ngày quá hạn và phí phạt khi trả sách.</li>
+                        <li><strong>Báo cáo Thống kê:</strong> Thống kê tồn kho, phiếu đang mượn, phiếu quá hạn và doanh thu tiền phạt.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>⚙️ Yêu cầu Kỹ thuật & Phi chức năng</h3>
+                    <ul>
+                        <li><strong>Tính toàn vẹn dữ liệu:</strong> Ngăn chặn xóa sách hoặc độc giả đang có giao dịch mượn chưa hoàn tất (<code>ItemInUseException</code>).</li>
+                        <li><strong>Tính bền vững (Persistence):</strong> Dữ liệu lưu trữ xuống ổ đĩa dạng nhị phân (<code>.dat</code>), không mất khi tắt ứng dụng.</li>
+                        <li><strong>Tính mở rộng (Extensibility):</strong> Dễ dàng bổ sung đối tượng độc giả hoặc chính sách tính phạt mới nhờ OOP & Interface.</li>
+                        <li><strong>Độ tin cậy cao:</strong> Kiểm soát toàn bộ ngoại lệ đầu vào và nghiệp vụ qua hệ thống 13 lớp Exception tùy chỉnh.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: CHƯƠNG 2 - KIẾN TRÚC PHÂN TẦNG & CẤU TRÚC MÃ NGUỒN -->
+        <section class="slide" data-title="04. Chương 2: Kiến trúc & Cấu trúc Code">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">04</span> Kiến trúc Phân tầng & Tổ chức Mã nguồn</div>
+                <span class="chapter-pill">Chương 2: Thiết kế</span>
+            </div>
+            <div class="grid-8-12 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>Cấu trúc thư mục src/</span><span>Java Project</span></div>
+                    <div class="code-body"><span class="cls">src/</span>
+├── <span class="fn">main/</span>       <span class="cmt">// Tầng Giao diện (UI)</span>
+│   ├── Main.java, AppContext.java
+│   ├── BaseMenu.java, MainMenu.java
+│   └── Login/Register/Book/Reader/Borrow/StatisticMenu
+├── <span class="fn">model/</span>      <span class="cmt">// Tầng Thực thể (Domain)</span>
+│   ├── User.java, Librarian.java
+│   ├── Reader.java, Student/Priority/LecturerReader
+│   └── Book.java, BorrowTicket, Detail, ReturnRecord
+├── <span class="fn">service/</span>    <span class="cmt">// Tầng Nghiệp vụ (Business)</span>
+│   ├── Auth/Book/Reader/Borrow/Return/StatisticService
+│   └── Borrowable.java, FinePolicy + 3 Policy classes
+├── <span class="fn">repository/</span> <span class="cmt">// Tầng Dữ liệu (Persistence)</span>
+│   ├── BaseRepository&lt;T&gt;.java
+│   └── Account/Book/Reader/TicketRepository
+├── <span class="fn">exception/</span>  <span class="cmt">// 13 lớp Ngoại lệ nghiệp vụ</span>
+└── <span class="fn">utils/</span>      <span class="cmt">// Validator, IdGenerator, PasswordUtil...</span></div>
+                </div>
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3>🏛️ Nguyên tắc Thiết kế 5 Tầng</h3>
+                        <ul>
+                            <li><strong>Tầng UI (<code>main</code>):</strong> Chỉ chịu trách nhiệm hiển thị menu, nhận input qua <code>InputHelper</code> và gọi Service.</li>
+                            <li><strong>Tầng Service (<code>service</code>):</strong> Nơi tập trung toàn bộ quy tắc nghiệp vụ, kiểm tra điều kiện và điều phối Repository.</li>
+                            <li><strong>Tầng Repository (<code>repository</code>):</strong> Trừu tượng hóa việc đọc/ghi file nhị phân thông qua Generic <code>BaseRepository&lt;T&gt;</code>.</li>
+                            <li><strong>Dependency Injection (<code>AppContext</code>):</strong> Khởi tạo và kết nối toàn bộ các tầng tại một điểm duy nhất khi chạy ứng dụng.</li>
+                        </ul>
+                    </div>
+                    <div style="background: rgba(56,189,248,0.08); padding: 10px 14px; border-radius: 8px; border-left: 3px solid var(--primary); font-size: 0.85rem;">
+                        <strong>Luồng phụ thuộc:</strong> <code>UI</code> ➔ <code>Service</code> ➔ <code>Repository</code> ➔ <code>Model</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: UML 1 - CLASS DIAGRAM TẦNG MODEL -->
+        <section class="slide" data-title="05. UML Class Diagram: Tầng Model">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">05</span> Sơ đồ UML Class Diagram: Tầng Thực thể (Model)</div>
+                <span class="chapter-pill">Chương 2: Thiết kế UML</span>
+            </div>
+            <div class="uml-wrapper anim d2">
+                <svg class="uml-svg" viewBox="0 0 980 430">
+                    <defs>
+                        <marker id="inherit" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+                            <path d="M 1 1 L 11 6 L 1 11 z" fill="#0a101d" stroke="#38bdf8" stroke-width="1.5"/>
+                        </marker>
+                        <marker id="comp" viewBox="0 0 14 10" refX="1" refY="5" markerWidth="12" markerHeight="10" orient="auto">
+                            <path d="M 1 5 L 7 1 L 13 5 L 7 9 z" fill="#38bdf8"/>
+                        </marker>
+                        <marker id="assoc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+                        </marker>
+                    </defs>
+
+                    <!-- User -->
+                    <rect x="190" y="10" width="210" height="82" class="uml-rect-abs"/>
+                    <rect x="190" y="10" width="210" height="32" class="uml-hdr-abs"/>
+                    <text x="295" y="23" class="uml-stereo">&lt;&lt;abstract&gt;&gt; Serializable</text>
+                    <text x="295" y="36" class="uml-title">User</text>
+                    <text x="200" y="57" class="uml-text">- id, fullName, email, phone</text>
+                    <text x="200" y="75" class="uml-text">+ getRole(): String</text>
+
+                    <!-- Librarian -->
+                    <rect x="15" y="135" width="185" height="75" class="uml-rect"/>
+                    <rect x="15" y="135" width="185" height="25" class="uml-hdr"/>
+                    <text x="107" y="152" class="uml-title">Librarian</text>
+                    <text x="25" y="176" class="uml-text">- username, passwordHash</text>
+                    <text x="25" y="194" class="uml-text">+ getRole(): "LIBRARIAN"</text>
+
+                    <!-- Reader -->
+                    <rect x="245" y="135" width="225" height="82" class="uml-rect-abs"/>
+                    <rect x="245" y="135" width="225" height="32" class="uml-hdr-abs"/>
+                    <text x="357" y="148" class="uml-stereo">&lt;&lt;abstract&gt;&gt;</text>
+                    <text x="357" y="161" class="uml-title">Reader</text>
+                    <text x="255" y="182" class="uml-text">- readerType: String</text>
+                    <text x="255" y="200" class="uml-text">+ abstract getMaxBorrowLimit(): int</text>
+
+                    <!-- Subclasses -->
+                    <rect x="15" y="275" width="165" height="65" class="uml-rect"/>
+                    <rect x="15" y="275" width="165" height="24" class="uml-hdr"/>
+                    <text x="97" y="291" class="uml-title">StudentReader</text>
+                    <text x="25" y="315" class="uml-text">+ getMaxBorrowLimit(): 5</text>
+
+                    <rect x="195" y="275" width="185" height="65" class="uml-rect"/>
+                    <rect x="195" y="275" width="185" height="24" class="uml-hdr"/>
+                    <text x="287" y="291" class="uml-title">PriorityStudentReader</text>
+                    <text x="205" y="315" class="uml-text">+ getMaxBorrowLimit(): 8</text>
+
+                    <rect x="395" y="275" width="170" height="65" class="uml-rect"/>
+                    <rect x="395" y="275" width="170" height="24" class="uml-hdr"/>
+                    <text x="480" y="291" class="uml-title">LecturerReader</text>
+                    <text x="405" y="315" class="uml-text">+ getMaxBorrowLimit(): 10</text>
+
+                    <path d="M 107 135 L 107 112 L 260 112 L 260 92" class="uml-line" marker-end="url(#inherit)"/>
+                    <path d="M 357 135 L 357 92" class="uml-line" marker-end="url(#inherit)"/>
+                    <path d="M 97 275 L 97 245 L 320 245 L 320 217" class="uml-line" marker-end="url(#inherit)"/>
+                    <path d="M 287 275 L 287 245 L 357 245 L 357 217" class="uml-line" marker-end="url(#inherit)"/>
+                    <path d="M 480 275 L 480 245 L 395 245 L 395 217" class="uml-line" marker-end="url(#inherit)"/>
+
+                    <!-- BorrowTicket -->
+                    <rect x="610" y="15" width="350" height="110" class="uml-rect"/>
+                    <rect x="610" y="15" width="350" height="25" class="uml-hdr"/>
+                    <text x="785" y="32" class="uml-title">BorrowTicket</text>
+                    <text x="620" y="56" class="uml-text">- ticketId, readerId, borrowDate, dueDate</text>
+                    <text x="620" y="74" class="uml-text">- status: TicketStatus (BORROWING, RETURNED)</text>
+                    <text x="620" y="92" class="uml-text">- details: List&lt;BorrowTicketDetail&gt;</text>
+                    <text x="620" y="110" class="uml-text">- returnRecord: ReturnRecord</text>
+
+                    <!-- Detail & ReturnRecord -->
+                    <rect x="595" y="175" width="175" height="85" class="uml-rect"/>
+                    <rect x="595" y="175" width="175" height="24" class="uml-hdr"/>
+                    <text x="682" y="191" class="uml-title">BorrowTicketDetail</text>
+                    <text x="605" y="214" class="uml-text">- bookId: String</text>
+                    <text x="605" y="231" class="uml-text">- quantity: int</text>
+
+                    <rect x="790" y="175" width="175" height="85" class="uml-rect"/>
+                    <rect x="790" y="175" width="175" height="24" class="uml-hdr"/>
+                    <text x="877" y="191" class="uml-title">ReturnRecord</text>
+                    <text x="800" y="214" class="uml-text">- returnDate: LocalDate</text>
+                    <text x="800" y="231" class="uml-text">- overdueDays, fineAmount</text>
+
+                    <!-- Book -->
+                    <rect x="630" y="305" width="310" height="105" class="uml-rect"/>
+                    <rect x="630" y="305" width="310" height="25" class="uml-hdr"/>
+                    <text x="785" y="322" class="uml-title">Book</text>
+                    <text x="640" y="346" class="uml-text">- bookId, title, author, category, year</text>
+                    <text x="640" y="364" class="uml-text">- totalQuantity, availableQuantity</text>
+                    <text x="640" y="382" class="uml-text">+ decreaseAvailable(), increaseAvailable()</text>
+
+                    <path d="M 610 70 L 520 70 L 520 175 L 470 175" class="uml-line" marker-end="url(#assoc)"/>
+                    <text x="530" y="63" class="uml-stereo">1..* mượn bởi 1</text>
+                    <path d="M 682 125 L 682 175" class="uml-line" marker-start="url(#comp)"/>
+                    <path d="M 877 125 L 877 175" class="uml-line" marker-start="url(#comp)"/>
+                    <path d="M 682 260 L 682 305" class="uml-line" marker-end="url(#assoc)"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: UML 2 - CLASS DIAGRAM SERVICE & STRATEGY PATTERN -->
+        <section class="slide" data-title="06. UML Class Diagram: Service & Strategy">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">06</span> Sơ đồ UML: Tầng Service & Strategy Pattern</div>
+                <span class="chapter-pill">Chương 2: Thiết kế UML</span>
+            </div>
+            <div class="uml-wrapper anim d2">
+                <svg class="uml-svg" viewBox="0 0 980 420">
+                    <defs>
+                        <marker id="realize" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+                            <path d="M 1 1 L 11 6 L 1 11 z" fill="#0a101d" stroke="#34d399" stroke-width="1.5"/>
+                        </marker>
+                        <marker id="dep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#38bdf8" stroke-width="1.5"/>
+                        </marker>
+                    </defs>
+
+                    <rect x="40" y="15" width="260" height="82" class="uml-rect-int"/>
+                    <rect x="40" y="15" width="260" height="32" class="uml-hdr-int"/>
+                    <text x="170" y="28" class="uml-stereo">&lt;&lt;interface&gt;&gt;</text>
+                    <text x="170" y="41" class="uml-title">Borrowable</text>
+                    <text x="50" y="64" class="uml-text">+ createBorrowTicket(...): BorrowTicket</text>
+                    <text x="50" y="82" class="uml-text">+ getActiveTicketsByReader(...)</text>
+
+                    <rect x="30" y="145" width="280" height="110" class="uml-rect"/>
+                    <rect x="30" y="145" width="280" height="26" class="uml-hdr"/>
+                    <text x="170" y="162" class="uml-title">BorrowService</text>
+                    <text x="40" y="186" class="uml-text">- ticketRepo, bookRepo, readerRepo</text>
+                    <text x="40" y="204" class="uml-text">+ createBorrowTicket(...)</text>
+                    <text x="40" y="222" class="uml-text">+ countCurrentlyBorrowedBooks(...)</text>
+                    <path d="M 170 145 L 170 97" class="uml-dash" marker-end="url(#realize)"/>
+
+                    <rect x="360" y="145" width="270" height="110" class="uml-rect"/>
+                    <rect x="360" y="145" width="270" height="26" class="uml-hdr"/>
+                    <text x="495" y="162" class="uml-title">ReturnService</text>
+                    <text x="370" y="186" class="uml-text">- ticketRepo, bookRepo, readerRepo</text>
+                    <text x="370" y="204" class="uml-text">+ returnTicket(ticketId, returnDate)</text>
+                    <text x="370" y="222" class="uml-text">+ resolveFinePolicy(Reader): FinePolicy</text>
+
+                    <rect x="680" y="15" width="270" height="82" class="uml-rect-int"/>
+                    <rect x="680" y="15" width="270" height="32" class="uml-hdr-int"/>
+                    <text x="815" y="28" class="uml-stereo">&lt;&lt;interface&gt;&gt;</text>
+                    <text x="815" y="41" class="uml-title">FinePolicy</text>
+                    <text x="690" y="68" class="uml-text">+ calculateFine(overdueDays: long,</text>
+                    <text x="690" y="84" class="uml-text">               bookCount: int): double</text>
+
+                    <rect x="670" y="135" width="290" height="55" class="uml-rect"/>
+                    <rect x="670" y="135" width="290" height="22" class="uml-hdr"/>
+                    <text x="815" y="150" class="uml-title">NormalStudentFinePolicy</text>
+                    <text x="680" y="174" class="uml-text">+ calculateFine(): 5.000đ / ngày / cuốn</text>
+
+                    <rect x="670" y="205" width="290" height="55" class="uml-rect"/>
+                    <rect x="670" y="205" width="290" height="22" class="uml-hdr"/>
+                    <text x="815" y="220" class="uml-title">PriorityStudentFinePolicy</text>
+                    <text x="680" y="244" class="uml-text">+ calculateFine(): 2.000đ / ngày / cuốn</text>
+
+                    <rect x="670" y="275" width="290" height="55" class="uml-rect"/>
+                    <rect x="670" y="275" width="290" height="22" class="uml-hdr"/>
+                    <text x="815" y="290" class="uml-title">LecturerFinePolicy</text>
+                    <text x="680" y="314" class="uml-text">+ calculateFine(): 3.000đ / ngày / cuốn</text>
+
+                    <path d="M 670 162 L 650 162 L 650 56 L 680 56" class="uml-dash" marker-end="url(#realize)"/>
+                    <path d="M 670 232 L 650 232 L 650 56 L 680 56" class="uml-dash" marker-end="url(#realize)"/>
+                    <path d="M 670 302 L 650 302 L 650 56 L 680 56" class="uml-dash" marker-end="url(#realize)"/>
+                    <path d="M 550 145 L 550 56 L 680 56" class="uml-line" stroke-dasharray="4 3" marker-end="url(#dep)"/>
+                    <text x="605" y="48" class="uml-stereo">&lt;&lt;uses&gt;&gt;</text>
+
+                    <rect x="30" y="305" width="190" height="85" class="uml-rect"/>
+                    <rect x="30" y="305" width="190" height="24" class="uml-hdr"/>
+                    <text x="125" y="321" class="uml-title">AuthService</text>
+                    <text x="40" y="344" class="uml-text">+ login(), register()</text>
+
+                    <rect x="240" y="305" width="190" height="85" class="uml-rect"/>
+                    <rect x="240" y="305" width="190" height="24" class="uml-hdr"/>
+                    <text x="335" y="321" class="uml-title">Book &amp; ReaderService</text>
+                    <text x="250" y="344" class="uml-text">+ CRUD &amp; Search</text>
+
+                    <rect x="450" y="305" width="195" height="85" class="uml-rect"/>
+                    <rect x="450" y="305" width="195" height="24" class="uml-hdr"/>
+                    <text x="547" y="321" class="uml-title">StatisticService</text>
+                    <text x="460" y="344" class="uml-text">+ Overdue &amp; FineStats</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: UML 3 - SEQUENCE DIAGRAM NGHIỆP VỤ MƯỢN SÁCH -->
+        <section class="slide" data-title="07. UML Sequence Diagram: Mượn sách">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">07</span> Sơ đồ Tuần tự (Sequence Diagram): Luồng Mượn Sách</div>
+                <span class="chapter-pill">Chương 2: Thiết kế UML</span>
+            </div>
+            <div class="uml-wrapper anim d2">
+                <svg class="uml-svg" viewBox="0 0 980 410">
+                    <defs>
+                        <marker id="seq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 1 1 L 9 5 L 1 9 z" fill="#38bdf8"/>
+                        </marker>
+                        <marker id="seq-ret" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#34d399" stroke-width="1.5"/>
+                        </marker>
+                    </defs>
+
+                    <rect x="40" y="15" width="130" height="34" class="uml-rect"/><text x="105" y="36" class="uml-title">BorrowMenu</text>
+                    <line x1="105" y1="49" x2="105" y2="395" class="uml-line" stroke-dasharray="5 5"/>
+
+                    <rect x="260" y="15" width="150" height="34" class="uml-rect"/><text x="335" y="36" class="uml-title">BorrowService</text>
+                    <line x1="335" y1="49" x2="335" y2="395" class="uml-line" stroke-dasharray="5 5"/>
+
+                    <rect x="490" y="15" width="150" height="34" class="uml-rect"/><text x="565" y="36" class="uml-title">ReaderRepository</text>
+                    <line x1="565" y1="49" x2="565" y2="395" class="uml-line" stroke-dasharray="5 5"/>
+
+                    <rect x="680" y="15" width="140" height="34" class="uml-rect"/><text x="750" y="36" class="uml-title">BookRepository</text>
+                    <line x1="750" y1="49" x2="750" y2="395" class="uml-line" stroke-dasharray="5 5"/>
+
+                    <rect x="845" y="15" width="120" height="34" class="uml-rect"/><text x="905" y="36" class="uml-title">TicketRepo</text>
+                    <line x1="905" y1="49" x2="905" y2="395" class="uml-line" stroke-dasharray="5 5"/>
+
+                    <line x1="105" y1="80" x2="335" y2="80" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#seq-arrow)"/>
+                    <text x="120" y="73" class="uml-text">1. createBorrowTicket(readerId, items, dueDate)</text>
+
+                    <line x1="335" y1="115" x2="565" y2="115" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#seq-arrow)"/>
+                    <text x="350" y="108" class="uml-text">2. findById(readerId)</text>
+                    <line x1="565" y1="140" x2="335" y2="140" class="uml-dash" marker-end="url(#seq-ret)"/>
+                    <text x="380" y="133" class="uml-stereo">Reader (hoặc ném ReaderNotFoundException)</text>
+
+                    <rect x="315" y="155" width="380" height="42" fill="rgba(251, 191, 36, 0.08)" stroke="#fbbf24" rx="4"/>
+                    <text x="505" y="173" class="uml-text" text-anchor="middle" fill="#fbbf24">3. Kiểm tra hạn mức: currentBorrowed + requestQty &lt;= reader.getMaxBorrowLimit()</text>
+                    <text x="505" y="189" class="uml-stereo">(Nếu vượt quá ➔ ném BorrowLimitExceededException)</text>
+
+                    <line x1="335" y1="225" x2="750" y2="225" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#seq-arrow)"/>
+                    <text x="350" y="218" class="uml-text">4. Kiểm tra tồn kho từng sách &amp; book.decreaseAvailable(qty)</text>
+                    <line x1="750" y1="252" x2="335" y2="252" class="uml-dash" marker-end="url(#seq-ret)"/>
+                    <text x="430" y="245" class="uml-stereo">saveAll() cập nhật books.dat (hoặc OutOfStockException)</text>
+
+                    <line x1="335" y1="290" x2="905" y2="290" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#seq-arrow)"/>
+                    <text x="350" y="283" class="uml-text">5. Tạo BorrowTicket (IdGenerator) &amp; save(ticket)</text>
+                    <line x1="905" y1="318" x2="335" y2="318" class="uml-dash" marker-end="url(#seq-ret)"/>
+                    <text x="530" y="311" class="uml-stereo">Ghi xuống tickets.dat</text>
+
+                    <line x1="335" y1="355" x2="105" y2="355" class="uml-dash" marker-end="url(#seq-ret)"/>
+                    <text x="135" y="348" class="uml-text" fill="#34d399">6. Trả về BorrowTicket hoàn chỉnh &amp; in biên lai</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: CODE CHI TIẾT 1 - KẾ THỪA & ĐA HÌNH TRONG MODEL -->
+        <section class="slide" data-title="08. Code chi tiết: Kế thừa Model (Reader)">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">08</span> Cài đặt Kế thừa & Đa hình: Phân cấp Độc giả</div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>model/Reader.java</span><span>Abstract Base Class</span></div>
+                    <div class="code-body"><span class="kw">package</span> model;
+
+<span class="kw">public abstract class</span> <span class="cls">Reader</span> <span class="kw">extends</span> <span class="cls">User</span> {
+    <span class="kw">private static final long</span> serialVersionUID = <span class="num">1L</span>;
+    <span class="kw">private</span> <span class="cls">String</span> readerType;
+
+    <span class="kw">public</span> <span class="fn">Reader</span>(<span class="cls">String</span> id, <span class="cls">String</span> fullName, <span class="cls">String</span> email, 
+                  <span class="cls">String</span> phone, <span class="cls">String</span> readerType) {
+        <span class="kw">super</span>(id, fullName, email, phone);
+        <span class="kw">this</span>.readerType = readerType;
+    }
+
+    <span class="cmt">// Phương thức trừu tượng ép các lớp con định nghĩa hạn mức</span>
+    <span class="kw">public abstract int</span> <span class="fn">getMaxBorrowLimit</span>();
+
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="cls">String</span> <span class="fn">getRole</span>() { <span class="kw">return</span> readerType; }
+}</div>
+                </div>
+                <div class="code-window">
+                    <div class="code-header"><span>model/StudentReader & LecturerReader.java</span><span>Polymorphism</span></div>
+                    <div class="code-body"><span class="cmt">// 1. Sinh viên thường: Tối đa 5 cuốn</span>
+<span class="kw">public class</span> <span class="cls">StudentReader</span> <span class="kw">extends</span> <span class="cls">Reader</span> {
+    <span class="kw">public</span> <span class="fn">StudentReader</span>(<span class="cls">String</span> id, <span class="cls">String</span> name, <span class="cls">String</span> email, <span class="cls">String</span> phone) {
+        <span class="kw">super</span>(id, name, email, phone, <span class="str">"STUDENT"</span>);
+    }
+    <span class="ann">@Override</span>
+    <span class="kw">public int</span> <span class="fn">getMaxBorrowLimit</span>() { <span class="kw">return</span> <span class="num">5</span>; }
+}
+
+<span class="cmt">// 2. Sinh viên ưu tiên: Tối đa 8 cuốn</span>
+<span class="kw">public class</span> <span class="cls">PriorityStudentReader</span> <span class="kw">extends</span> <span class="cls">Reader</span> {
+    <span class="ann">@Override</span>
+    <span class="kw">public int</span> <span class="fn">getMaxBorrowLimit</span>() { <span class="kw">return</span> <span class="num">8</span>; }
+}
+
+<span class="cmt">// 3. Giảng viên: Tối đa 10 cuốn</span>
+<span class="kw">public class</span> <span class="cls">LecturerReader</span> <span class="kw">extends</span> <span class="cls">Reader</span> {
+    <span class="ann">@Override</span>
+    <span class="kw">public int</span> <span class="fn">getMaxBorrowLimit</span>() { <span class="kw">return</span> <span class="num">10</span>; }
+}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: CODE CHI TIẾT 2 - STRATEGY PATTERN TÍNH TIỀN PHẠT -->
+        <section class="slide" data-title="09. Code chi tiết: Strategy Pattern (FinePolicy)">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">09</span> Cài đặt Strategy Pattern: Chính sách Tính Phạt</div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>service/FinePolicy.java & Implementations</span><span>Strategy</span></div>
+                    <div class="code-body"><span class="kw">public interface</span> <span class="cls">FinePolicy</span> {
+    <span class="kw">double</span> <span class="fn">calculateFine</span>(<span class="kw">long</span> overdueDays, <span class="kw">int</span> bookCount);
+}
+
+<span class="kw">public class</span> <span class="cls">NormalStudentFinePolicy</span> <span class="kw">implements</span> <span class="cls">FinePolicy</span> {
+    <span class="kw">private static final double</span> RATE = <span class="num">5000.0</span>;
+    <span class="ann">@Override</span>
+    <span class="kw">public double</span> <span class="fn">calculateFine</span>(<span class="kw">long</span> days, <span class="kw">int</span> books) {
+        <span class="kw">return</span> days &lt;= <span class="num">0</span> ? <span class="num">0</span> : days * books * RATE;
+    }
+}
+
+<span class="kw">public class</span> <span class="cls">PriorityStudentFinePolicy</span> <span class="kw">implements</span> <span class="cls">FinePolicy</span> {
+    <span class="kw">private static final double</span> RATE = <span class="num">2000.0</span>;
+    <span class="ann">@Override</span>
+    <span class="kw">public double</span> <span class="fn">calculateFine</span>(<span class="kw">long</span> days, <span class="kw">int</span> books) {
+        <span class="kw">return</span> days &lt;= <span class="num">0</span> ? <span class="num">0</span> : days * books * RATE;
+    }
+}</div>
+                </div>
+                <div class="code-window">
+                    <div class="code-header"><span>service/ReturnService.java</span><span>Dynamic Policy Dispatch</span></div>
+                    <div class="code-body"><span class="kw">public class</span> <span class="cls">ReturnService</span> {
+    <span class="cmt">// Tự động chọn chiến lược tính phạt theo kiểu đối tượng Reader</span>
+    <span class="kw">private</span> <span class="cls">FinePolicy</span> <span class="fn">resolveFinePolicy</span>(<span class="cls">Reader</span> reader) {
+        <span class="kw">if</span> (reader <span class="kw">instanceof</span> <span class="cls">PriorityStudentReader</span>) {
+            <span class="kw">return new</span> <span class="cls">PriorityStudentFinePolicy</span>();
+        }
+        <span class="kw">if</span> (reader <span class="kw">instanceof</span> <span class="cls">LecturerReader</span>) {
+            <span class="kw">return new</span> <span class="cls">LecturerFinePolicy</span>();
+        }
+        <span class="kw">return new</span> <span class="cls">NormalStudentFinePolicy</span>();
+    }
+
+    <span class="kw">public</span> <span class="cls">ReturnRecord</span> <span class="fn">returnTicket</span>(<span class="cls">String</span> ticketId, <span class="cls">LocalDate</span> returnDate) 
+            <span class="kw">throws</span> <span class="cls">LibraryException</span> {
+        <span class="cls">BorrowTicket</span> ticket = ticketRepo.<span class="fn">findById</span>(ticketId);
+        <span class="kw">if</span> (ticket.getStatus() == <span class="cls">TicketStatus</span>.RETURNED)
+            <span class="kw">throw new</span> <span class="cls">TicketAlreadyReturnedException</span>(<span class="str">"Phiếu đã được trả!"</span>);
+        
+        <span class="kw">long</span> overdueDays = <span class="cls">ChronoUnit</span>.DAYS.<span class="fn">between</span>(ticket.getDueDate(), returnDate);
+        <span class="cls">FinePolicy</span> policy = <span class="fn">resolveFinePolicy</span>(readerRepo.<span class="fn">findById</span>(ticket.getReaderId()));
+        <span class="kw">double</span> fine = policy.<span class="fn">calculateFine</span>(<span class="cls">Math</span>.<span class="fn">max</span>(<span class="num">0</span>, overdueDays), ticket.<span class="fn">getTotalBooks</span>());
+        <span class="cmt">// Hoàn kho sách & lưu ReturnRecord...</span>
+    }
+}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: CODE CHI TIẾT 3 - NGHIỆP VỤ MƯỢN SÁCH (BORROWSERVICE) -->
+        <section class="slide" data-title="10. Code chi tiết: Nghiệp vụ Mượn (BorrowService)">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">10</span> Cài đặt Nghiệp vụ Mượn sách: <code>BorrowService.java</code></div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-12-8 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>service/BorrowService.java</span><span>Atomic Transaction Logic</span></div>
+                    <div class="code-body"><span class="kw">public class</span> <span class="cls">BorrowService</span> <span class="kw">implements</span> <span class="cls">Borrowable</span> {
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="cls">BorrowTicket</span> <span class="fn">createBorrowTicket</span>(<span class="cls">String</span> readerId, 
+            <span class="cls">List</span>&lt;<span class="cls">BorrowTicketDetail</span>&gt; details, <span class="cls">LocalDate</span> dueDate) <span class="kw">throws</span> <span class="cls">LibraryException</span> {
+        <span class="cls">Reader</span> reader = readerRepo.<span class="fn">findById</span>(readerId);
+        <span class="kw">if</span> (reader == <span class="kw">null</span>) <span class="kw">throw new</span> <span class="cls">ReaderNotFoundException</span>(<span class="str">"Không tìm thấy độc giả!"</span>);
+
+        <span class="cmt">// 1. Kiểm tra tổng số sách đang mượn + sách mới &lt;= hạn mức độc giả</span>
+        <span class="kw">int</span> currentBorrowed = <span class="fn">countCurrentlyBorrowedBooks</span>(readerId);
+        <span class="kw">int</span> requestQty = details.stream().mapToInt(<span class="cls">BorrowTicketDetail</span>::getQuantity).sum();
+        <span class="kw">if</span> (currentBorrowed + requestQty &gt; reader.<span class="fn">getMaxBorrowLimit</span>()) {
+            <span class="kw">throw new</span> <span class="cls">BorrowLimitExceededException</span>(<span class="str">"Vượt quá hạn mức mượn cho phép!"</span>);
+        }
+
+        <span class="cmt">// 2. Kiểm tra tồn kho toàn bộ sách TRƯỚC khi trừ kho (đảm bảo tính nguyên tử)</span>
+        <span class="kw">for</span> (<span class="cls">BorrowTicketDetail</span> item : details) {
+            <span class="cls">Book</span> book = bookRepo.<span class="fn">findById</span>(item.getBookId());
+            <span class="kw">if</span> (book == <span class="kw">null</span>) <span class="kw">throw new</span> <span class="cls">BookNotFoundException</span>(<span class="str">"Sách không tồn tại!"</span>);
+            <span class="kw">if</span> (book.getAvailableQuantity() &lt; item.getQuantity()) {
+                <span class="kw">throw new</span> <span class="cls">OutOfStockException</span>(<span class="str">"Sách không đủ số lượng: "</span> + book.getTitle());
+            }
+        }
+
+        <span class="cmt">// 3. Cập nhật kho và lưu phiếu mượn</span>
+        details.forEach(d -&gt; bookRepo.<span class="fn">findById</span>(d.getBookId()).<span class="fn">decreaseAvailable</span>(d.getQuantity()));
+        bookRepo.<span class="fn">saveAll</span>();
+        <span class="cls">BorrowTicket</span> ticket = <span class="kw">new</span> <span class="cls">BorrowTicket</span>(<span class="cls">IdGenerator</span>.<span class="fn">nextTicketId</span>(ticketRepo.findAll()), ...);
+        ticketRepo.<span class="fn">add</span>(ticket);
+        <span class="kw">return</span> ticket;
+    }
+}</div>
+                </div>
+                <div class="card">
+                    <h3>🛡️ Điểm nổi bật trong Cài đặt</h3>
+                    <ul>
+                        <li><strong>Tính Nguyên tử (Atomicity):</strong> Vòng lặp kiểm tra tồn kho chạy hoàn tất trước khi thực hiện <code>decreaseAvailable()</code>. Nếu cuốn sách thứ 2 trong phiếu hết hàng, cuốn thứ 1 sẽ không bị trừ kho sai lệch.</li>
+                        <li><strong>Đa hình tự động:</strong> Gọi <code>reader.getMaxBorrowLimit()</code> tự động áp dụng ngưỡng 5, 8 hoặc 10 cuốn tùy thuộc thực thể độc giả truyền vào.</li>
+                        <li><strong>Đồng bộ dữ liệu:</strong> Sau khi cập nhật kho sách, gọi ngay <code>bookRepo.saveAll()</code> và <code>ticketRepo.add()</code> để ghi xuống tệp <code>.dat</code>.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 11: CODE CHI TIẾT 4 - GENERIC REPOSITORY & LƯU TRỮ NHỊ PHÂN -->
+        <section class="slide" data-title="11. Code chi tiết: Generic BaseRepository<T>">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">11</span> Cài đặt Tầng Dữ liệu: Generic <code>BaseRepository&lt;T&gt;</code></div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-12-8 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>repository/BaseRepository.java</span><span>Java Generics & Serialization</span></div>
+                    <div class="code-body"><span class="kw">public abstract class</span> <span class="cls">BaseRepository</span>&lt;<span class="cls">T</span> <span class="kw">extends</span> <span class="cls">Serializable</span>&gt; {
+    <span class="kw">protected final</span> <span class="cls">String</span> filePath;
+    <span class="kw">protected</span> <span class="cls">List</span>&lt;<span class="cls">T</span>&gt; items;
+
+    <span class="kw">public</span> <span class="fn">BaseRepository</span>(<span class="cls">String</span> filePath) {
+        <span class="kw">this</span>.filePath = filePath;
+        <span class="kw">this</span>.items = <span class="fn">loadFromFile</span>();
+    }
+
+    <span class="ann">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)
+    <span class="kw">protected</span> <span class="cls">List</span>&lt;<span class="cls">T</span>&gt; <span class="fn">loadFromFile</span>() {
+        <span class="cls">File</span> file = <span class="kw">new</span> <span class="cls">File</span>(filePath);
+        <span class="kw">if</span> (!file.exists()) <span class="kw">return new</span> <span class="cls">ArrayList</span>&lt;&gt;();
+        <span class="kw">try</span> (<span class="cls">ObjectInputStream</span> ois = <span class="kw">new</span> <span class="cls">ObjectInputStream</span>(<span class="kw">new</span> <span class="cls">FileInputStream</span>(file))) {
+            <span class="kw">return</span> (<span class="cls">List</span>&lt;<span class="cls">T</span>&gt;) ois.<span class="fn">readObject</span>();
+        } <span class="kw">catch</span> (<span class="cls">Exception</span> e) {
+            <span class="kw">throw new</span> <span class="cls">DataStorageException</span>(<span class="str">"Lỗi đọc file dữ liệu: "</span> + filePath, e);
+        }
+    }
+
+    <span class="kw">public void</span> <span class="fn">saveAll</span>() {
+        <span class="cls">File</span> file = <span class="kw">new</span> <span class="cls">File</span>(filePath);
+        <span class="kw">if</span> (file.getParentFile() != <span class="kw">null</span>) file.getParentFile().<span class="fn">mkdirs</span>();
+        <span class="kw">try</span> (<span class="cls">ObjectOutputStream</span> oos = <span class="kw">new</span> <span class="cls">ObjectOutputStream</span>(<span class="kw">new</span> <span class="cls">FileOutputStream</span>(file))) {
+            oos.<span class="fn">writeObject</span>(items);
+        } <span class="kw">catch</span> (<span class="cls">IOException</span> e) {
+            <span class="kw">throw new</span> <span class="cls">DataStorageException</span>(<span class="str">"Lỗi ghi file dữ liệu: "</span> + filePath, e);
+        }
+    }
+}</div>
+                </div>
+                <div class="card">
+                    <h3>💾 Lợi ích của Thiết kế Generic</h3>
+                    <ul>
+                        <li><strong>Loại bỏ trùng lặp code (DRY):</strong> Toàn bộ 4 Repository con (<code>AccountRepository</code>, <code>BookRepository</code>, <code>ReaderRepository</code>, <code>TicketRepository</code>) kế thừa trọn vẹn cơ chế I/O mà không phải viết lại luồng đọc/ghi file.</li>
+                        <li><strong>An toàn kiểu dữ liệu (Type-Safety):</strong> Ràng buộc <code>&lt;T extends Serializable&gt;</code> đảm bảo mọi thực thể lưu xuống <code>data/*.dat</code> đều hỗ trợ tuần tự hóa hợp lệ tại thời điểm biên dịch.</li>
+                        <li><strong>Tự động khởi tạo thư mục:</strong> Tự gọi <code>mkdirs()</code> nếu thư mục <code>data/</code> chưa tồn tại.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: CODE CHI TIẾT 5 - XÁC THỰC, BẢO MẬT & TIỆN ÍCH (UTILS) -->
+        <section class="slide" data-title="12. Code chi tiết: AuthService & Utils">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">12</span> Cài đặt Xác thực (<code>AuthService</code>) & Bộ công cụ <code>Utils</code></div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>service/AuthService.java & utils/PasswordUtil.java</span><span>Security</span></div>
+                    <div class="code-body"><span class="cmt">// Mã hóa mật khẩu một chiều bằng SHA-256 trong PasswordUtil</span>
+<span class="kw">public static</span> <span class="cls">String</span> <span class="fn">hashPassword</span>(<span class="cls">String</span> rawPassword) {
+    <span class="kw">try</span> {
+        <span class="cls">MessageDigest</span> md = <span class="cls">MessageDigest</span>.<span class="fn">getInstance</span>(<span class="str">"SHA-256"</span>);
+        <span class="kw">byte</span>[] hash = md.<span class="fn">digest</span>(rawPassword.getBytes(<span class="cls">StandardCharsets</span>.UTF_8));
+        <span class="cls">StringBuilder</span> hex = <span class="kw">new</span> <span class="cls">StringBuilder</span>();
+        <span class="kw">for</span> (<span class="kw">byte</span> b : hash) hex.<span class="fn">append</span>(<span class="cls">String</span>.<span class="fn">format</span>(<span class="str">"%02x"</span>, b));
+        <span class="kw">return</span> hex.<span class="fn">toString</span>();
+    } <span class="kw">catch</span> (<span class="cls">NoSuchAlgorithmException</span> e) {
+        <span class="kw">throw new</span> <span class="cls">RuntimeException</span>(e);
+    }
+}
+
+<span class="cmt">// Kiểm tra đăng nhập trong AuthService</span>
+<span class="kw">public</span> <span class="cls">Librarian</span> <span class="fn">login</span>(<span class="cls">String</span> username, <span class="cls">String</span> password) <span class="kw">throws</span> <span class="cls">AuthenticationException</span> {
+    <span class="cls">Librarian</span> acc = accountRepo.<span class="fn">findByUsername</span>(username);
+    <span class="kw">if</span> (acc == <span class="kw">null</span> || !acc.getPasswordHash().<span class="fn">equals</span>(<span class="cls">PasswordUtil</span>.<span class="fn">hashPassword</span>(password))) {
+        <span class="kw">throw new</span> <span class="cls">AuthenticationException</span>(<span class="str">"Tên đăng nhập hoặc mật khẩu không đúng!"</span>);
+    }
+    <span class="kw">return</span> acc;
+}</div>
+                </div>
+                <div class="card">
+                    <h3>🧰 Hệ thống 7 Lớp Tiện ích (Package <code>utils</code>)</h3>
+                    <ul>
+                        <li><code>PasswordUtil</code>: Băm mật khẩu SHA-256 trước khi lưu xuống <code>accounts.dat</code>.</li>
+                        <li><code>Validator</code>: Kiểm tra Regex Email, Số điện thoại 10 chữ số, chuỗi rỗng và số nguyên dương; ném <code>InvalidDataException</code> hoặc <code>InvalidQuantityException</code>.</li>
+                        <li><code>IdGenerator</code>: Tự động sinh mã định danh duy nhất tăng dần (<code>BK001</code>, <code>RD001</code>, <code>TK001</code>, <code>LB001</code>).</li>
+                        <li><code>InputHelper</code>: Đọc dữ liệu Console an toàn, tự động bắt <code>NumberFormatException</code> và <code>DateTimeParseException</code> để yêu cầu nhập lại.</li>
+                        <li><code>DateFormatter</code> & <code>MoneyFormatter</code>: Định dạng ngày <code>dd/MM/yyyy</code> và tiền tệ <code>#,### VNĐ</code>.</li>
+                        <li><code>TextUtils</code>: Chuẩn hóa chuỗi tìm kiếm không dấu tiếng Việt.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 13: CODE CHI TIẾT 6 - APPCONTEXT & TẦNG GIAO DIỆN CONSOLE -->
+        <section class="slide" data-title="13. Code chi tiết: AppContext & BaseMenu">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">13</span> Cài đặt Điều phối Trung tâm (<code>AppContext</code>) & Giao diện UI</div>
+                <span class="chapter-pill">Chương 3: Chi tiết Cài đặt Code</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>main/AppContext.java</span><span>Dependency Injection</span></div>
+                    <div class="code-body"><span class="kw">public class</span> <span class="cls">AppContext</span> {
+    <span class="kw">private final</span> <span class="cls">AccountRepository</span> accountRepo;
+    <span class="kw">private final</span> <span class="cls">BookRepository</span> bookRepo;
+    <span class="kw">private final</span> <span class="cls">ReaderRepository</span> readerRepo;
+    <span class="kw">private final</span> <span class="cls">TicketRepository</span> ticketRepo;
+
+    <span class="kw">private final</span> <span class="cls">AuthService</span> authService;
+    <span class="kw">private final</span> <span class="cls">BookService</span> bookService;
+    <span class="kw">private final</span> <span class="cls">BorrowService</span> borrowService;
+    <span class="kw">private final</span> <span class="cls">ReturnService</span> returnService;
+    <span class="kw">private final</span> <span class="cls">StatisticService</span> statisticService;
+
+    <span class="kw">public</span> <span class="fn">AppContext</span>() {
+        <span class="kw">this</span>.accountRepo = <span class="kw">new</span> <span class="cls">AccountRepository</span>(<span class="str">"data/accounts.dat"</span>);
+        <span class="kw">this</span>.bookRepo    = <span class="kw">new</span> <span class="cls">BookRepository</span>(<span class="str">"data/books.dat"</span>);
+        <span class="kw">this</span>.readerRepo  = <span class="kw">new</span> <span class="cls">ReaderRepository</span>(<span class="str">"data/readers.dat"</span>);
+        <span class="kw">this</span>.ticketRepo  = <span class="kw">new</span> <span class="cls">TicketRepository</span>(<span class="str">"data/tickets.dat"</span>);
+        <span class="cmt">// Inject Repositories vào Services & nạp SampleDataService...</span>
+    }
+}</div>
+                </div>
+                <div class="code-window">
+                    <div class="code-header"><span>main/BaseMenu.java & BorrowMenu.java</span><span>Exception Handling</span></div>
+                    <div class="code-body"><span class="kw">public abstract class</span> <span class="cls">BaseMenu</span> {
+    <span class="kw">protected final</span> <span class="cls">AppContext</span> context;
+    <span class="kw">public abstract void</span> <span class="fn">show</span>();
+}
+
+<span class="cmt">// Bắt ngoại lệ tập trung tại tầng Menu giúp chương trình không bao giờ crash</span>
+<span class="kw">private void</span> <span class="fn">handleBorrow</span>() {
+    <span class="kw">try</span> {
+        <span class="cls">String</span> readerId = <span class="cls">InputHelper</span>.<span class="fn">readString</span>(<span class="str">"Nhập mã độc giả: "</span>);
+        <span class="cls">LocalDate</span> dueDate = <span class="cls">InputHelper</span>.<span class="fn">readDate</span>(<span class="str">"Ngày hẹn trả (dd/MM/yyyy): "</span>);
+        <span class="cls">BorrowTicket</span> ticket = context.getBorrowService()
+                                     .<span class="fn">createBorrowTicket</span>(readerId, items, dueDate);
+        System.out.<span class="fn">println</span>(<span class="str">"✔ Lập phiếu thành công! Mã: "</span> + ticket.getTicketId());
+    } <span class="kw">catch</span> (<span class="cls">LibraryException</span> e) {
+        System.out.<span class="fn">println</span>(<span class="str">"✘ Thao tác thất bại: "</span> + e.getMessage());
+    }
+}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 14: KIỂM THỬ TỰ ĐỘNG (UNIT TEST & INTEGRATION TEST) -->
+        <section class="slide" data-title="14. Kiểm thử Tự động (ServiceTest & ManagementTest)">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">14</span> Kiểm thử Tự động (<code>ServiceTest</code> & <code>ManagementTest</code>)</div>
+                <span class="chapter-pill">Chương 3: Kiểm thử Hệ thống</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="code-window">
+                    <div class="code-header"><span>test/ServiceTest.java</span><span>Automated Assertions</span></div>
+                    <div class="code-body"><span class="cmt">// Trích đoạn kiểm thử quy tắc nghiệp vụ & ngoại lệ trong ServiceTest</span>
+<span class="fn">test</span>(<span class="str">"Tính phí phạt quá hạn cho Sinh viên thường (5.000đ/ngày/cuốn)"</span>, () -&gt; {
+    <span class="cls">BorrowTicket</span> ticket = borrowService.<span class="fn">createBorrowTicket</span>(
+        <span class="str">"RD001"</span>, <span class="cls">List</span>.of(<span class="kw">new</span> <span class="cls">BorrowTicketDetail</span>(<span class="str">"BK001"</span>, <span class="num">2</span>)),
+        <span class="cls">LocalDate</span>.now().minusDays(<span class="num">3</span>) <span class="cmt">// Quá hạn 3 ngày</span>
+    );
+    <span class="cls">ReturnRecord</span> rec = returnService.<span class="fn">returnTicket</span>(ticket.getTicketId(), <span class="cls">LocalDate</span>.now());
+    <span class="fn">assertEquals</span>(<span class="num">30000.0</span>, rec.getFineAmount()); <span class="cmt">// 3 ngày * 2 cuốn * 5.000đ</span>
+});
+
+<span class="fn">test</span>(<span class="str">"Ném BorrowLimitExceededException khi vượt hạn mức mượn"</span>, () -&gt; {
+    <span class="fn">assertThrows</span>(<span class="cls">BorrowLimitExceededException</span>.<span class="kw">class</span>, () -&gt; {
+        borrowService.<span class="fn">createBorrowTicket</span>(<span class="str">"RD001"</span>, 
+            <span class="cls">List</span>.of(<span class="kw">new</span> <span class="cls">BorrowTicketDetail</span>(<span class="str">"BK001"</span>, <span class="num">6</span>)), <span class="cls">LocalDate</span>.now().plusDays(<span class="num">7</span>));
+    });
+});</div>
+                </div>
+                <div class="card">
+                    <h3>🧪 Kết quả Thực thi Bộ Kiểm thử</h3>
+                    <table class="data-table" style="margin-bottom: 14px;">
+                        <thead>
+                            <tr>
+                                <th>Bộ kiểm thử</th>
+                                <th>Phạm vi kiểm tra</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>ServiceTest.java</code></td>
+                                <td>Auth, Book, Reader, Borrow, Return, FinePolicy, Statistic & 13 Exceptions</td>
+                                <td style="color: var(--accent); font-weight: 700;">100% PASS</td>
+                            </tr>
+                            <tr>
+                                <td><code>ManagementTest.java</code></td>
+                                <td>Kiểm thử tích hợp toàn luồng E2E & Lưu/Đọc file nhị phân <code>.dat</code></td>
+                                <td style="color: var(--accent); font-weight: 700;">100% PASS</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <ul>
+                        <li>Chạy tự động qua script <code>run-tests.sh</code> / <code>run-tests.bat</code>.</li>
+                        <li>Log chi tiết từng test case được lưu tại <code>test/ket-qua-test.txt</code> và <code>docs/ket-qua-chay-thu-console.txt</code>.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 15: ĐÁNH GIÁ ƯU ĐIỂM & HẠN CHẾ -->
+        <section class="slide" data-title="15. Đánh giá Ưu điểm & Hạn chế">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">15</span> Đánh giá Kết quả: Ưu điểm & Hạn chế Tồn tại</div>
+                <span class="chapter-pill">Tổng kết & Đánh giá</span>
+            </div>
+            <div class="grid-2 anim d2">
+                <div class="card" style="border-top: 3px solid var(--accent);">
+                    <h3 style="color: var(--accent);">🌟 Ưu điểm Nổi bật của Hệ thống</h3>
+                    <ul>
+                        <li><strong>Kiến trúc sạch, dễ bảo trì:</strong> Tách biệt hoàn toàn giao diện Console khỏi nghiệp vụ và lưu trữ dữ liệu.</li>
+                        <li><strong>Áp dụng chuẩn OOP & Design Pattern:</strong> Kế thừa đa cấp (<code>User</code> $\rightarrow$ <code>Reader</code>), <code>Strategy Pattern</code> cho chính sách phạt, <code>Generic Repository</code> và <code>Dependency Injection</code>.</li>
+                        <li><strong>An toàn dữ liệu cao:</strong> Kiểm soát chặt chẽ mọi trường hợp ngoại lệ, đảm bảo tính nguyên tử khi mượn nhiều sách và ràng buộc khóa ngoại logic trước khi xóa.</li>
+                        <li><strong>Sẵn sàng triển khai:</strong> Có dữ liệu mẫu tự động (<code>SampleDataService</code>), kịch bản demo và tệp thực thi <code>LibraryApp.jar</code>.</li>
+                    </ul>
+                </div>
+                <div class="card" style="border-top: 3px solid var(--warning);">
+                    <h3 style="color: var(--warning);">⚠️ Hạn chế Tồn tại</h3>
+                    <ul>
+                        <li><strong>Lưu trữ bằng File nhị phân (<code>.dat</code>):</strong> Chỉ phù hợp với quy mô dữ liệu vừa và nhỏ, chưa hỗ trợ truy vấn phức tạp diện rộng hay truy cập đồng thời đa người dùng (Concurrency).</li>
+                        <li><strong>Giao diện dòng lệnh (Console):</strong> Trực quan ở mức bảng văn bản, chưa hỗ trợ thao tác chuột hay hiển thị biểu đồ thống kê đồ họa.</li>
+                        <li><strong>Phân quyền đơn cấp:</strong> Hiện tại mới hỗ trợ vai trò Thủ thư (<code>Librarian</code>) vận hành hệ thống, chưa có cổng đăng nhập riêng cho Độc giả tự tra cứu trực tuyến.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 16: KẾT LUẬN & HƯỚNG PHÁT TRIỂN -->
+        <section class="slide" data-title="16. Kết luận & Hướng phát triển">
+            <div class="slide-header anim d1">
+                <div class="slide-title"><span class="num-tag">16</span> Kết luận & Hướng Phát triển Tương lai</div>
+                <span class="chapter-pill">Kết luận</span>
+            </div>
+            <div class="grid-3 anim d2">
+                <div class="card">
+                    <h3>🗄️ 1. Nâng cấp Cơ sở Dữ liệu</h3>
+                    <p>Thay thế tầng <code>BaseRepository&lt;T&gt;</code> bằng kết nối CSDL quan hệ (<strong>MySQL / PostgreSQL</strong>) qua JDBC hoặc Hibernate/JPA mà không cần thay đổi logic tầng Service.</p>
+                </div>
+                <div class="card">
+                    <h3>🌐 2. Phát triển Giao diện Web / GUI</h3>
+                    <p>Tận dụng trọn vẹn tầng <code>service</code> hiện có để bọc thành <strong>RESTful API (Spring Boot)</strong> kết nối giao diện Web hiện đại hoặc ứng dụng Desktop JavaFX.</p>
+                </div>
+                <div class="card">
+                    <h3>🔔 3. Tính năng Thông minh</h3>
+                    <p>Tích hợp quét mã vạch (Barcode/QR) cho sách và thẻ độc giả; tự động gửi Email thông báo nhắc nhở trước hạn trả sách 2 ngày.</p>
+                </div>
+            </div>
+            <div class="card anim d3" style="margin-top: 26px; text-align: center; background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12)); border-color: rgba(56, 189, 248, 0.35);">
+                <h2 style="font-size: 1.5rem; color: #fff; margin-bottom: 8px;">Cảm ơn Thầy/Cô và các bạn đã lắng nghe!</h2>
+                <p style="color: var(--primary); font-weight: 600;">Nhóm 10 • Đồ án Hệ thống Quản lý Thư viện (LibraryManagement)</p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-bar">
+        <select class="slide-select" id="slideSelect" title="Chuyển nhanh đến slide"></select>
+        <div class="controls">
+            <button class="btn-nav" id="prevBtn" title="Slide trước (←)">❮</button>
+            <span class="slide-counter" id="slideCounter">1 / 16</span>
+            <button class="btn-nav" id="nextBtn" title="Slide tiếp theo (→)">❯</button>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        const slideSelect = document.getElementById('slideSelect');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        slides.forEach((slide, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
+            slideSelect.appendChild(opt);
+        });
+
+        function updateSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            const progress = ((index + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+            slideCounter.textContent = `${index + 1} / ${totalSlides}`;
+            slideSelect.value = index;
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateSlide(currentSlide);
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+        slideSelect.addEventListener('change', (e) => {
+            currentSlide = parseInt(e.target.value, 10);
+            updateSlide(currentSlide);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                currentSlide = 0;
+                updateSlide(currentSlide);
+            } else if (e.key === 'End') {
+                currentSlide = totalSlides - 1;
+                updateSlide(currentSlide);
+            }
+        });
+
+        updateSlide(0);
+    </script>
+</body>
+</html>
